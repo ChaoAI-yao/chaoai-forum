@@ -1,0 +1,4 @@
+import { db } from "@/lib/db";
+import { notFound } from "next/navigation";
+import Link from "next/link";
+export default async function Profile({params}:{params:Promise<{id:string}>}){const {id}=await params;const user=await db.user.findUnique({where:{id},select:{id:true,name:true,createdAt:true,posts:{where:{status:"PUBLISHED"},orderBy:{createdAt:"desc"},select:{id:true,title:true,category:true,createdAt:true}}}});if(!user)notFound();return <><section className="card"><h1>{user.name}</h1><p className="muted">加入于 {user.createdAt.toLocaleDateString("zh-CN")}</p></section><h2>公开帖子</h2>{user.posts.map(p=><article className="card" key={p.id}><Link href={`/posts/${p.id}`}><h3>{p.title}</h3></Link><span className="muted">{p.category} · {p.createdAt.toLocaleDateString("zh-CN")}</span></article>)}</>;}

@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  HIDDEN
+}
+
+model User {
+  id           String      @id @default(cuid())
+  email        String      @unique
+  name         String
+  passwordHash String
+  role         Role        @default(USER)
+  isBanned     Boolean     @default(false)
+  createdAt    DateTime    @default(now())
+  posts        Post[]
+  comments     Comment[]
+  savedPosts   SavedPost[]
+}
+
+model Post {
+  id        String      @id @default(cuid())
+  title     String
+  body      String
+  category  String
+  tags      String      @default("")
+  status    PostStatus  @default(PUBLISHED)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  authorId  String
+  author    User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments  Comment[]
+  savedBy   SavedPost[]
+  @@index([status, createdAt])
+  @@index([category, status])
+  @@index([authorId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  body      String
+  createdAt DateTime @default(now())
+  authorId  String
+  postId    String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  @@index([postId, createdAt])
+}
+
+model SavedPost {
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  @@id([userId, postId])
+}
